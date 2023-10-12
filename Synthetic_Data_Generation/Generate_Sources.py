@@ -33,10 +33,10 @@ if __name__ == '__main__':
     sourceHyperedges = np.random.choice(np.arange(H.M), size=numSources, replace=False)
 
     # Plots hypergraph in new window
-    print('Plotting...')
+    print('Plotting...[turned off]')
     # plot_diffusions_hg(SC, H, sourceHyperedges, num_steps, '../Learning/data/sourceLoc/')
-    plot_2d_sc(SC, '../Learning/data/sourceLoc/')
-    plot_2d_hg(H, None, sourceHyperedges, '../Learning/data/sourceLoc/')
+    # plot_2d_sc(SC, '../Learning/data/sourceLoc/')
+    # plot_2d_hg(H, None, sourceHyperedges, '../Learning/data/sourceLoc/')
 
     # Generate the GSOs for the clique and line expansion
     print('Generating GSOs...')
@@ -52,11 +52,11 @@ if __name__ == '__main__':
                                 # By default the scale of the covariance is set as the mean of the absolute value of
                                 # the node signals for each sample
     print('Generating {} sources...'.format(numSources))
-    dataParams = {'tMax': num_steps, 'noiseParams': (mu, cov_multiplier), 'dataType': torch.float64,
-                  'doPlots': True, 'SC': SC, 'device': 'cuda:0' if (useGPU and torch.cuda.is_available()) else 'cpu'}
+    dataParams = {'tMax': num_steps, 'noiseParams': (mu, cov_multiplier), 'dataType': torch.float32,
+                  'doPlots': False, 'SC': SC, 'device': 'cuda:0' if (useGPU and torch.cuda.is_available()) else 'mps:0'}
     data = hypergraphSources(H, nTrain, nValid, nTest, sourceHyperedges, **dataParams)
 
-    # Save everything
+    # Save everythingclear
     print('Saving...')
     with open('../Learning/data/sourceLoc/sourceLoc_GSOs.pkl','wb') as f:
         pickle.dump(GSOs, f)

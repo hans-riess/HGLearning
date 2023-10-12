@@ -6,11 +6,11 @@
 # Luana Ruiz, rubruiz@seas.upenn.edu
 
 import torch
-import torch_sparse
+# import torch_sparse
 import alegnn
 import torch.nn as nn
 # import torch.optim as optim
-import torch.sparse
+# import torch.sparse
 import alegnn.utils.graphML as gml
 import sparseGraphML as spgml
 import alegnn.utils.graphTools

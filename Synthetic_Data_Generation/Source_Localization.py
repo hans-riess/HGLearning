@@ -122,8 +122,8 @@ class hypergraphSources(_dataForClassification):
 
     """
 
-    def __init__(self, G, nTrain, nValid, nTest, sourceEdges, tMax=None, SC=None, noiseParams=None,
-                 doPlots=False, dataType=np.float64, device='cpu', num_folds=None):
+    def __init__(self, H, nTrain, nValid, nTest, sourceEdges, tMax=None, SC=None, noiseParams=None,
+                 doPlots=False, dataType=np.float64, device='mps:0', num_folds=None):
         # Initialize parent
         super().__init__()
         # store attributes
@@ -132,7 +132,7 @@ class hypergraphSources(_dataForClassification):
 
         # Get data masks
         self.nTrain = nTrain
-        self.nValid = snValid
+        self.nValid = nValid
         self.nTest = nTest
         # total number of samples
         self.nTotal = self.nTrain + self.nValid + self.nTest
@@ -150,9 +150,9 @@ class hypergraphSources(_dataForClassification):
 
         # \\\ Generate the samples
         # sample source nodes
-        sampledSources = np.random.choice(self.targets, size=nTotal)
+        sampledSources = np.random.choice(self.targets, size=self.nTotal)
         # sample diffusion times
-        sampledTimes = np.random.choice(np.arange(1, tMax), size=nTotal)
+        sampledTimes = np.random.choice(np.arange(1, tMax), size=self.nTotal)
 
         # Construct the samples for each sampled source hyperedge. In each case,
         # we set the signal values of all nodes in the chosen hyperedge to 1,
@@ -184,27 +184,27 @@ class hypergraphSources(_dataForClassification):
             count += 1
 
         # Get the sampled signals
-        sampled_signals = np.array([signals_dict[sampledSources[i]][sampledTimes[i], :] for i in range(nTotal)])
+        sampled_signals = np.array([signals_dict[sampledSources[i]][sampledTimes[i], :] for i in range(self.nTotal)])
 
         # Generate measurement noise
         if noiseParams is not None:
             mu, cov_multiplier = noiseParams
             # covariance = np.mean(np.abs(sampled_signals), axis=1) * cov_multiplier
-            noise = np.random.multivariate_normal(mu, np.eye(H.N)*cov_multiplier, size=nTotal)  # np.array([np.random.multivariate_normal(mu, np.eye(H.N) * covariance[i]) for i in range(nTotal)])
+            noise = np.random.multivariate_normal(mu, np.eye(H.N)*cov_multiplier, size=self.nTotal)  # np.array([np.random.multivariate_normal(mu, np.eye(H.N) * covariance[i]) for i in range(nTotal)])
         else:
-            noise = np.zeros(nTotal, H.N)
+            noise = np.zeros(self.nTotal, H.N)
 
         # Now, we have the signals and the labels
         signals = np.expand_dims(sampled_signals + noise, axis=1)  # nTotal x 1 x N
-        labels = torch.unsqueeze(torch.DoubleTensor([relabeledSources[sampledSources[i]] for i in range(nTotal)]), dim=1) # nTotal x 1
+        labels = torch.unsqueeze(torch.DoubleTensor([relabeledSources[sampledSources[i]] for i in range(self.nTotal)]), dim=1) # nTotal x 1
 
         # Split and save them
-        self.samples['train']['signals'] = signals[0:nTrain, :, :]
-        self.samples['train']['targets'] = labels[0:nTrain]
-        self.samples['valid']['signals'] = signals[nTrain:nTrain + nValid, :, :]
-        self.samples['valid']['targets'] = labels[nTrain:nTrain + nValid]
-        self.samples['test']['signals'] = signals[nTrain + nValid:nTotal, :, :]
-        self.samples['test']['targets'] = labels[nTrain + nValid:nTotal]
+        self.samples['train']['signals'] = signals[0:self.nTrain, :, :]
+        self.samples['train']['targets'] = labels[0:self.nTrain]
+        self.samples['valid']['signals'] = signals[self.nTrain:self.nTrain + self.nValid, :, :]
+        self.samples['valid']['targets'] = labels[self.nTrain:self.nTrain + self.nValid]
+        self.samples['test']['signals'] = signals[self.nTrain + self.nValid:self.nTotal, :, :]
+        self.samples['test']['targets'] = labels[self.nTrain + self.nValid:self.nTotal]
         # Change data to specified type and device
         self.astype(self.dataType)
         self.to(self.device)
@@ -356,4 +356,4 @@ class hypergraphSources(_dataForClassification):
 
     def to(self, device):
         super().to(device)
-        self.metric = self.metric.to(device)
+        # self.metric = self.metric.to(device) #CAUSING ERROR?

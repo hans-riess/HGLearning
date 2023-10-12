@@ -45,7 +45,7 @@ import sys
 import csv
 
 # \\\ Alelab libraries:
-sys.path.insert(1, os.path.abspath('../graph-neural-networks'))
+
 import alegnn.utils.graphML as gml
 import alegnn.modules.model as model
 
@@ -70,7 +70,7 @@ from architectures import LocalGNNCliqueLine, LocalGNNHGLap, LocalGNNClique, Loc
 from Helpers import sourceTrainer, sourceEvaluate, dhgTrainer, dhgEvaluate
 from copy import deepcopy
 
-possible_gnn_models = ['LocalGNNCliqueLine', 'LocalGNNHGLap', 'LocalGNNClique', 'LocalGNNLine']
+possible_gnn_models = ['LocalGNNCliqueLine']
 figSize = 7  # Overall size of the figure that contains the plot
 lineWidth = 2  # Width of the plot lines
 markerShape = 'o'  # Shape of the markers
@@ -115,7 +115,7 @@ def train_helper(learner_params, train_params, dataset_params, directory, fold=N
     with open(dataset_params['matrix_path'] + '_GSOs.pkl', 'rb') as f:
         GSOs = pickle.load(f)
     with open(dataset_params['matrix_path'] + '_incidence_matrices.pkl', 'rb') as f:
-        incidence_matrices = pickle.load(f)
+        incidence_matrices = pickle.load(f) #works but gives waring about csr_matrix
 
     ########
     # DATA #
@@ -127,10 +127,16 @@ def train_helper(learner_params, train_params, dataset_params, directory, fold=N
     print(torch.cuda.device_count())
     with open(dataset_params['data_path'], 'rb') as f:
         data = pickle.load(f)
+        # data = torch.load(f,map_location='mps:0', pickle_module=pickle)
+
     if useGPU and torch.cuda.is_available():
         GSOs = [torch.tensor(X.todense(), device='cuda:0') for X in GSOs]
         incidence_matrices = [torch.tensor(X, device='cuda:0') for X in incidence_matrices]
         data.to('cuda:0')
+    elif useGPU and torch.backends.mps.is_available():
+        GSOs = [torch.tensor(X.todense(), device='mps:0') for X in GSOs]
+        incidence_matrices = [torch.tensor(X, device='mps:0') for X in incidence_matrices]
+        data.to('mps:0')
     else:
         GSOs = [torch.tensor(X.todense(), device='cpu') for X in GSOs]
         incidence_matrices = [torch.tensor(X, device='cpu') for X in incidence_matrices]
@@ -681,8 +687,8 @@ def run_experiment(args, section_name='', fold=None):
 
     dataset_params = {
         'data_type': args.get('data_type', 'sourceLoc'),
-        'matrix_path': args.get('matrix_path', 'data/sourceLoc/sourceLoc'),
-        'data_path': args.get('data_path', 'data/sourceLoc/sourceLoc_data.pkl'),
+        'matrix_path': args.get('matrix_path', '../data/sourceLoc/sourceLoc'),
+        'data_path': args.get('data_path', '../data/sourceLoc/sourceLoc_data.pkl'),
         'num_folds': args.get('num_folds', None),
         'normalize_graph_signal': args.getboolean('normalize_graph_signal', False),
         'prop_data_train': args.getfloat('prop_data_train', 0.6),

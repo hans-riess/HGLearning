@@ -36,7 +36,7 @@ import matplotlib
 
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rcParams['font.family'] = 'serif'
-matplotlib.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}']
+matplotlib.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 import matplotlib.pyplot as plt
 import pickle
 import datetime
